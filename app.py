@@ -113,13 +113,13 @@ if processed_df is not None:
     st.dataframe(processed_df)
 
     # Excelダウンロード処理
+   # Excelダウンロード処理
     output = BytesIO()
     try:
-        # 修正1: 変数名を processed_df に。engineを明示。
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        # engineを 'openpyxl' に変更（こちらの方が標準的でエラーが起きにくいです）
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
             processed_df.to_excel(writer, index=False, sheet_name='Sheet1')
         
-        # 修正2: 正常に書き込めた場合のみ、ボタンを表示する
         st.download_button(
             label="📥 変換済みExcelをダウンロード",
             data=output.getvalue(),
@@ -127,5 +127,6 @@ if processed_df is not None:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
     except Exception as e:
-        st.error(f"Excelの作成に失敗しました。ライブラリが不足している可能性があります。: {e}")
-
+        # エラーメッセージに現在のPythonバージョンを表示するようにして原因を探りやすくします
+        import sys
+        st.error(f"Excel作成エラー (Python {sys.version.split()[0]}): {e}")
