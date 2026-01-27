@@ -112,21 +112,20 @@ if processed_df is not None:
     st.subheader("✅ 変換完了プレビュー")
     st.dataframe(processed_df)
 
-    # Excelダウンロード
+    # Excelダウンロード処理
     output = BytesIO()
-    # Excel書き出し時に空欄が 'nan' にならないよう設定
-    # engineを指定せず、明示的にインストールされていることを確認する書き方
-try:
-    import xlsxwriter
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False)
-except ImportError:
-    st.error("ライブラリの読み込みに失敗しています。管理画面から再起動してください。")
-    
-    st.download_button(
-        label="📥 変換済みExcelをダウンロード",
-        data=output.getvalue(),
-        file_name=f"拘束時間管理表_{date.today()}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    try:
+        # 修正1: 変数名を processed_df に。engineを明示。
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            processed_df.to_excel(writer, index=False, sheet_name='Sheet1')
+        
+        # 修正2: 正常に書き込めた場合のみ、ボタンを表示する
+        st.download_button(
+            label="📥 変換済みExcelをダウンロード",
+            data=output.getvalue(),
+            file_name=f"拘束時間管理表_{date.today()}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        st.error(f"Excelの作成に失敗しました。ライブラリが不足している可能性があります。: {e}")
 
-    )
