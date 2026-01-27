@@ -5,9 +5,9 @@ import requests
 from io import BytesIO, StringIO
 from datetime import date
 
-# --- 1. Excel計算用のシリアル値変換関数 ---
+# --- 1. Excel変換用補助関数 ---
 def time_to_excel_serial(time_str):
-    """'13:30' を Excelのシリアル値（1日=1.0）に変換"""
+    """'13:30' を Excelのシリアル値に変換"""
     if not time_str or ':' not in str(time_str):
         return None
     try:
@@ -38,16 +38,16 @@ def transform_data(df):
         match = re.search(r'(\d+)月\s*(\d+)日', text)
         if match and pd.notnull(row['year_val']):
             try:
-                # ここではdate型で保持
-                return date(int(row['year_val']), int(match.group(1)), int(match.group(2)))
+                # 確実に datetime オブジェクトにする
+                return pd.to_datetime(date(int(row['year_val']), int(match.group(1)), int(match.group(2))))
             except:
-                return ""
-        return ""
+                return None
+        return None
 
     df['日付'] = df.apply(create_date, axis=1)
 
     ignore_keywords = ["累計拘束時間", "D2 :", "最大拘束時間", "事業所", "令和", "日付", "氏名"]
-    df = df[df['日付'] != ""]
+    df = df[df['日付'].notnull()]
     for kw in ignore_keywords:
         df = df[~df['Column1'].str.contains(kw, na=False)]
 
@@ -61,9 +61,8 @@ def transform_data(df):
         "Column20": "時間外深夜時間", "Column21": "摘要1", "Column22": "摘要2"
     }
     df = df.rename(columns=rename_dict)
-    
     final_cols = ["乗務員コード", "氏名", "日付"] + [c for c in rename_dict.values() if c in df.columns]
-    return df[final_cols].replace(['nan', 'None', None], '')
+    return df[final_cols]
 
 # --- 3. Streamlit Web画面 ---
 st.set_page_config(page_title="拘束時間管理変換ツール", layout="wide")
@@ -79,7 +78,10 @@ if uploaded_file:
 if processed_df is not None:
     st.divider()
     st.subheader("✅ 変換完了プレビュー")
-    st.dataframe(processed_df, use_container_width=True)
+    # プレビュー表示用
+    display_df = processed_df.copy()
+    display_df['日付'] = display_df['日付'].dt.strftime('%Y/%m/%d')
+    st.dataframe(display_df, use_container_width=True)
 
     # --- Excelダウンロード ---
     st.divider()
@@ -93,26 +95,25 @@ if processed_df is not None:
             "実働時間", "時間外時間", "深夜時間", "時間外深夜時間"
         ]
         
-        # 数値（シリアル値）に変換
         for col in time_cols:
             if col in export_df.columns:
                 export_df[col] = export_df[col].apply(time_to_excel_serial)
 
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        # 🌟 ポイント: datetime_format を空にしてデフォルトを無効化
+        with pd.ExcelWriter(output, engine='xlsxwriter', datetime_format='') as writer:
             export_df.to_excel(writer, index=False, sheet_name='Sheet1')
             workbook = writer.book
             worksheet = writer.sheets['Sheet1']
             
-            # 書式の定義
+            # フォーマット定義
             h_mm_format = workbook.add_format({'num_format': '[h]:mm', 'align': 'right'})
-            date_format = workbook.add_format({'num_format': 'yyyy/m/d', 'align': 'left'}) # 2025/11/2 形式
+            # yyyy/m/d とすることで 2025/1/2 のように表示
+            date_format = workbook.add_format({'num_format': 'yyyy/m/d', 'align': 'left'})
             
             for i, col_name in enumerate(export_df.columns):
                 if col_name == "日付":
-                    # 日付列にフォーマット適用
                     worksheet.set_column(i, i, 15, date_format)
                 elif col_name in time_cols:
-                    # 時間列にフォーマット適用（これで計算可能になる）
                     worksheet.set_column(i, i, 12, h_mm_format)
                 else:
                     worksheet.set_column(i, i, 15)
