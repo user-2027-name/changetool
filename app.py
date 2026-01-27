@@ -12,12 +12,11 @@ def time_to_excel_serial(time_str):
         return None
     try:
         h, m = map(int, str(time_str).split(':'))
-        # Excelでは 1時間 = 1/24, 1分 = 1/(24*60)
         return (h / 24.0) + (m / 1440.0)
     except:
         return None
 
-# --- 2. 共通のデータ変換関数 (プレビュー表示用) ---
+# --- 2. 共通のデータ変換関数 ---
 def transform_data(df):
     df.columns = [f"Column{i+1}" for i in range(len(df.columns))]
     df = df.astype(str).apply(lambda x: x.str.strip())
@@ -39,6 +38,7 @@ def transform_data(df):
         match = re.search(r'(\d+)月\s*(\d+)日', text)
         if match and pd.notnull(row['year_val']):
             try:
+                # ここではdate型で保持
                 return date(int(row['year_val']), int(match.group(1)), int(match.group(2)))
             except:
                 return ""
@@ -103,12 +103,16 @@ if processed_df is not None:
             workbook = writer.book
             worksheet = writer.sheets['Sheet1']
             
-            # [h]:mm 形式を定義
+            # 書式の定義
             h_mm_format = workbook.add_format({'num_format': '[h]:mm', 'align': 'right'})
+            date_format = workbook.add_format({'num_format': 'yyyy/m/d', 'align': 'left'}) # 2025/11/2 形式
             
             for i, col_name in enumerate(export_df.columns):
-                if col_name in time_cols:
-                    # 列全体にフォーマットを適用（これで計算可能になる）
+                if col_name == "日付":
+                    # 日付列にフォーマット適用
+                    worksheet.set_column(i, i, 15, date_format)
+                elif col_name in time_cols:
+                    # 時間列にフォーマット適用（これで計算可能になる）
                     worksheet.set_column(i, i, 12, h_mm_format)
                 else:
                     worksheet.set_column(i, i, 15)
