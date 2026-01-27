@@ -3,5 +3,3 @@ pandas
 requests
 xlsxwriter
 openpyxl
-sqlalchemy
-mysqlclient
