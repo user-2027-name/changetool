@@ -6,6 +6,15 @@ from io import BytesIO, StringIO
 from datetime import date
 
 # --- 1. 共通のデータ変換関数 ---
+def time_to_num(time_str):
+    """'13:30' を 13.5 に変換する（計算用）"""
+    if not time_str or ':' not in str(time_str):
+        return 0.0
+    try:
+        h, m = map(int, str(time_str).split(':'))
+        return round(h + (m / 60.0), 2)
+    except:
+        return 0.0
 def transform_data(df):
     # 列名の初期設定 (22列固定)
     df.columns = [f"Column{i+1}" for i in range(len(df.columns))]
@@ -62,12 +71,22 @@ def transform_data(df):
     }
     df = df.rename(columns=rename_dict)
     
-    # 7. 最終整形
+ # --- 7. 最終整形 ---
     final_cols = ["乗務員コード", "氏名", "日付"] + [c for c in rename_dict.values() if c in df.columns]
-    
-    # 最後の仕上げ：データフレーム全体の nan を空文字に統一
     res = df[final_cols].replace(['nan', 'None', 'nan', None], '')
-    return res
+
+    # --- ここから追加：計算用データの作成 (2番の処理) ---
+    # 時間形式（XX:XX）が含まれる可能性のある列をリストアップ
+    calc_target_cols = ["始業時刻", "終業時刻", "運転時間", "休憩時間", "拘束時間合計", "実働時間", "時間外時間"]
+    
+    for col in calc_target_cols:
+        if col in res.columns:
+            # 元の「XX:XX」という表示用列はそのままに、
+            # 裏側で計算用の数値列（例：拘束時間合計_val）を作成
+            res[f"{col}_val"] = res[col].apply(time_to_num)
+    # --- 追加ここまで ---
+
+    return res # 最後に計算用データも入った res を返す
 
 # --- 2. Streamlit Web画面 ---
 st.set_page_config(page_title="拘束時間管理変換ツール", layout="wide")
@@ -130,3 +149,4 @@ if processed_df is not None:
         # エラーメッセージに現在のPythonバージョンを表示するようにして原因を探りやすくします
         import sys
         st.error(f"Excel作成エラー (Python {sys.version.split()[0]}): {e}")
+
