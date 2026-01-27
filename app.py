@@ -130,6 +130,31 @@ if processed_df is not None:
     st.divider()
     st.subheader("✅ 変換完了プレビュー")
     st.dataframe(processed_df)
+    if processed_df is not None:
+    st.divider()
+    st.subheader("📊 集計結果")
+
+    # 計算したい列を指定（例：実働時間）
+    target_col = "実働時間"
+
+    if target_col in processed_df.columns:
+        # 【重要】表示されている「13:30」を、その場だけ数値に変換して合計する
+        total_hours = processed_df[target_col].apply(time_to_num).sum()
+        
+        # 合計時間を「13.5」から「13:30」の形式に戻す（人間が見やすいように）
+        h = int(total_hours)
+        m = int(round((total_hours - h) * 60))
+        total_str = f"{h}:{m:02d}"
+
+        # 画面にカッコよく表示
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(f"全員の{target_col} 合計", total_str)
+        with col2:
+            st.metric("（数値換算）", f"{total_hours:.2f} 時間")
+            
+    else:
+        st.info(f"{target_col} のデータがないため集計をスキップしました。")
 
     # Excelダウンロード処理
    # Excelダウンロード処理
@@ -149,4 +174,5 @@ if processed_df is not None:
         # エラーメッセージに現在のPythonバージョンを表示するようにして原因を探りやすくします
         import sys
         st.error(f"Excel作成エラー (Python {sys.version.split()[0]}): {e}")
+
 
