@@ -5,9 +5,8 @@ import requests
 from io import BytesIO, StringIO
 from datetime import date
 
-# --- 1. 計算用の関数 (表には出さず、計算が必要な時だけ呼び出す) ---
+# --- 1. 計算用の関数 ---
 def time_to_num(time_str):
-    """'13:30' を 13.5 に変換する"""
     if not time_str or ':' not in str(time_str):
         return 0.0
     try:
@@ -17,7 +16,6 @@ def time_to_num(time_str):
         return 0.0
 
 def num_to_time(total_hours):
-    """13.5 を '13:30' に戻す"""
     h = int(total_hours)
     m = int(round((total_hours - h) * 60))
     return f"{h}:{m:02d}"
@@ -64,13 +62,19 @@ def transform_data(df):
     for kw in ignore_keywords:
         df = df[~df['Column1'].str.contains(kw, na=False)]
 
-    # リネーム
+    # 3. リネーム (全22列を維持)
     rename_dict = {
         "Column2": "始業時刻", "Column3": "終業時刻", "Column4": "運転時間",
-        "Column8": "休憩時間", "Column12": "拘束時間合計", "Column17": "実働時間"
+        "Column5": "重複運転時間", "Column6": "荷役時間", "Column7": "重複荷役時間",
+        "Column8": "休憩時間", "Column9": "重複休憩時間", "Column10": "拘束時間小計",
+        "Column11": "重複拘束時間小計", "Column12": "拘束時間合計", "Column13": "拘束時間累計",
+        "Column14": "前運転平均", "Column15": "後運転平均", "Column16": "休息時間",
+        "Column17": "実働時間", "Column18": "時間外時間", "Column19": "深夜時間",
+        "Column20": "時間外深夜時間", "Column21": "摘要1", "Column22": "摘要2"
     }
     df = df.rename(columns=rename_dict)
     
+    # 全ての列を表示対象に含める
     final_cols = ["乗務員コード", "氏名", "日付"] + [c for c in rename_dict.values() if c in df.columns]
     return df[final_cols].replace(['nan', 'None', None], '')
 
@@ -106,20 +110,17 @@ if processed_df is not None:
     st.subheader("✅ 変換完了プレビュー")
     st.dataframe(processed_df, use_container_width=True)
 
-    # --- 集計処理 (裏側で計算) ---
+    # --- 集計処理 (裏側で計算し、表には影響させない) ---
     st.subheader("📊 実働時間の集計")
     target_col = "実働時間"
     if target_col in processed_df.columns:
-        # 数値に変換して合計を出す
         total_hours = processed_df[target_col].apply(time_to_num).sum()
-        # 表示用に 'XX:XX' 形式に戻す
         total_time_str = num_to_time(total_hours)
 
         c1, c2 = st.columns(2)
         c1.metric(f"全体の{target_col} 合計", total_time_str)
         c2.metric("数値換算（合計時間）", f"{total_hours:.2f} h")
     
-    # --- Excelダウンロード ---
     st.divider()
     output = BytesIO()
     try:
