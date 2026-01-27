@@ -115,12 +115,18 @@ if processed_df is not None:
     # Excelダウンロード
     output = BytesIO()
     # Excel書き出し時に空欄が 'nan' にならないよう設定
+    # engineを指定せず、明示的にインストールされていることを確認する書き方
+try:
+    import xlsxwriter
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        processed_df.to_excel(writer, index=False, sheet_name='Sheet1')
+        df.to_excel(writer, index=False)
+except ImportError:
+    st.error("ライブラリの読み込みに失敗しています。管理画面から再起動してください。")
     
     st.download_button(
         label="📥 変換済みExcelをダウンロード",
         data=output.getvalue(),
         file_name=f"拘束時間管理表_{date.today()}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
     )
