@@ -81,7 +81,7 @@ if uploaded_file:
     on_bad_lines='skip'
 )
 df_input.columns = range(len(df_input.columns))
-    processed_df = transform_data(df_input)
+processed_df = transform_data(df_input)
 
 if processed_df is not None:
     st.divider()
@@ -134,4 +134,5 @@ if processed_df is not None:
         )
     except Exception as e:
         st.error(f"Excel作成エラー: {e}")
+
 
