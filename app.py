@@ -73,15 +73,17 @@ processed_df = None
 
 if uploaded_file:
     df_input = pd.read_csv(
-    uploaded_file,
-    encoding='cp932',
-    header=None,
-    engine='python',
-    usecols=range(22),
-    on_bad_lines='skip'
-)
-    df_input.columns = range(len(df_input.columns))
-    processed_df = transform_data(df_input)
+        uploaded_file,
+        encoding='cp932',
+        header=None,
+        engine='python',
+        on_bad_lines='skip'
+    )
+    # 22列に揃える
+    if len(df_input.columns) > 22:
+        df_input = df_input.iloc[:, :22]
+        df_input.columns = range(len(df_input.columns))
+        processed_df = transform_data(df_input)
 
 if processed_df is not None:
     st.divider()
@@ -134,6 +136,7 @@ if processed_df is not None:
         )
     except Exception as e:
         st.error(f"Excel作成エラー: {e}")
+
 
 
 
