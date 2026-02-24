@@ -79,11 +79,16 @@ if uploaded_file:
         engine='python',
         on_bad_lines='skip'
     )
-    # 22列に揃える
     if len(df_input.columns) > 22:
         df_input = df_input.iloc[:, :22]
         df_input.columns = range(len(df_input.columns))
-        processed_df = transform_data(df_input)
+    
+    # デバッグ用
+    st.write(f"読み込み行数: {len(df_input)}")
+    st.write(f"列数: {len(df_input.columns)}")
+    st.dataframe(df_input.head(10))
+    
+    processed_df = transform_data(df_input)
 
 if processed_df is not None:
     st.divider()
@@ -136,6 +141,7 @@ if processed_df is not None:
         )
     except Exception as e:
         st.error(f"Excel作成エラー: {e}")
+
 
 
 
