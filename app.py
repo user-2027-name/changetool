@@ -72,7 +72,7 @@ uploaded_file = st.file_uploader("ここにCSVファイルをドロップして�
 processed_df = None
 
 if uploaded_file:
-    df_input = pd.read_csv(uploaded_file, encoding='cp932', header=None, names=range(22), engine='python')
+    df_input = pd.read_csv(uploaded_file, encoding='cp932', header=None, names=range(22), engine='python', usecols=range(22))
     processed_df = transform_data(df_input)
 
 if processed_df is not None:
@@ -126,3 +126,4 @@ if processed_df is not None:
         )
     except Exception as e:
         st.error(f"Excel作成エラー: {e}")
+
