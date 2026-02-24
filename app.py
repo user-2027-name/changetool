@@ -86,6 +86,7 @@ if uploaded_file:
     # デバッグ用
     st.write(f"読み込み行数: {len(df_input)}")
     st.write(f"列数: {len(df_input.columns)}")
+    st.write(f"先頭1行の生データ: {df_input.iloc[0, 0]}")  # ← これを追加
     st.dataframe(df_input.head(10))
     
     processed_df = transform_data(df_input)
@@ -141,6 +142,7 @@ if processed_df is not None:
         )
     except Exception as e:
         st.error(f"Excel作成エラー: {e}")
+
 
 
 
