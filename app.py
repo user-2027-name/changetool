@@ -72,7 +72,15 @@ uploaded_file = st.file_uploader("ここにCSVファイルをドロップして�
 processed_df = None
 
 if uploaded_file:
-    df_input = pd.read_csv(uploaded_file, encoding='cp932', header=None, names=range(22), engine='python', usecols=range(22))
+    df_input = pd.read_csv(
+    uploaded_file,
+    encoding='cp932',
+    header=None,
+    engine='python',
+    usecols=range(22),
+    on_bad_lines='skip'
+)
+df_input.columns = range(len(df_input.columns))
     processed_df = transform_data(df_input)
 
 if processed_df is not None:
