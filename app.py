@@ -72,16 +72,11 @@ uploaded_file = st.file_uploader("ここにCSVファイルをドロップして�
 processed_df = None
 
 if uploaded_file:
-    # まず生のテキストとして読んで列数を確認
     import io
     content = uploaded_file.read()
     lines = content.decode('cp932').splitlines()
-    
-    # カンマが最も多い行の列数を正解とする
     max_cols = max(len(line.split(',')) for line in lines if line.strip())
-    st.write(f"最大列数: {max_cols}")
     
-    # 再度読み込み
     uploaded_file.seek(0)
     df_input = pd.read_csv(
         uploaded_file,
@@ -96,11 +91,6 @@ if uploaded_file:
     if len(df_input.columns) > 22:
         df_input = df_input.iloc[:, :22]
     df_input.columns = range(len(df_input.columns))
-    
-    st.write(f"読み込み行数: {len(df_input)}")
-    st.write(f"列数: {len(df_input.columns)}")
-    st.dataframe(df_input.head(10))
-    
     processed_df = transform_data(df_input)
 
 if processed_df is not None:
@@ -154,6 +144,7 @@ if processed_df is not None:
         )
     except Exception as e:
         st.error(f"Excel作成エラー: {e}")
+
 
 
 
