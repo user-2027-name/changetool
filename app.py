@@ -77,7 +77,7 @@ if uploaded_file:
         encoding='cp932',
         header=None,
         engine='python',
-        sep='\t',
+        sep=',',
         on_bad_lines='skip'
     )
     if len(df_input.columns) > 22:
@@ -142,6 +142,7 @@ if processed_df is not None:
         )
     except Exception as e:
         st.error(f"Excel作成エラー: {e}")
+
 
 
 
